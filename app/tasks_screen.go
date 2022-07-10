@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/filipgorny/org-tool/organizer"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -52,25 +50,28 @@ func (ts *TasksScreen) loadTasks() {
 }
 
 func (ts *TasksScreen) Build() {
+	ts.loadTasks()
+
 	tasksTable := tview.NewGrid()
-	tasksTable.SetRows(len(ts.tasks))
-	tasksTable.SetColumns(3)
+	tasksTable.SetColumns(0, 0, 0)
+	tasksTable.SetRows(1)
+	tasksTable.SetBorders(true)
 
 	doneCheck := ""
-	labelColor := ""
 
+	taskColor := tcell.ColorWhite
+
+	newPrimitive := func(color tcell.Color, text string) tview.Primitive {
+		return tview.NewTextView().
+			SetTextColor(color).
+			SetText(text)
+	}
 	for index, task := range ts.tasks {
-		taskBox := tview.NewBox()
-
-		if task == *ts.selectedTask {
-			taskBox.SetBackgroundColor(tcell.ColorWhite)
-		}
 		if task.Done {
-			labelColor = "gray"
 			doneCheck = "\u25c9"
 		} else {
-			labelColor = "white"
 			doneCheck = "\u25ef"
+			taskColor = tcell.ColorOrange
 		}
 
 		label := task.Label
@@ -79,21 +80,15 @@ func (ts *TasksScreen) Build() {
 			label = "<no label>"
 		}
 
-		doneCol := fmt.Sprintf("[white]%s", doneCheck)
-		numberCol := fmt.Sprintf("[gray]%s", task.Number)
-		labelCol := fmt.Sprintf("[%s]%s", labelColor, label)
-
-		doneCell := tview.NewTextView().SetText(doneCol)
-		numberCell := tview.NewTextView().SetText(numberCol)
-		labelCell := tview.NewTextView().SetText(labelCol)
-
-		tasksTable.AddItem(doneCell, index, 0, 0, 0, 0, 0, false)
-		tasksTable.AddItem(numberCell, index, 1, 0, 0, 0, 0, false)
-		tasksTable.AddItem(labelCell, index, 2, 0, 0, 0, 0, false)
+		tasksTable.AddItem(newPrimitive(taskColor, doneCheck), index, 0, 1, 1, 1, 1, false)
+		tasksTable.AddItem(newPrimitive(tcell.ColorOrange, task.Number), index, 1, 1, 0, 10, 1, false)
+		tasksTable.AddItem(newPrimitive(tcell.ColorWhite, label), index, 2, 1, 0, 10, 10, false)
 	}
 
 	ts.box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		tasksTable.DrawForSubclass(screen, ts.box)
+		screenWidth, screenHeight := screen.Size()
+		tasksTable.SetRect(2, 1, screenWidth-2, screenHeight)
+		tasksTable.Draw(screen)
 
 		return x, y, width, height
 	})

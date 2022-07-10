@@ -15,6 +15,8 @@ type Console struct {
 	currentScreen *Screen
 
 	isRunning bool
+
+	screenBox tview.Box
 }
 
 func NewConsole() Console {
@@ -37,9 +39,13 @@ func (c *Console) LoadScreen(name string) {
 	c.currentScreen = c.screens.GetScreen(name)
 	currentScreen := *c.currentScreen
 
+	currentScreen.Build()
+
+	c.screenBox = *currentScreen.GetBox()
+
 	c.tBox.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		currentScreen.Build()
-		currentScreen.GetBox().Draw(screen)
+		log.Println("width", width)
+		c.screenBox.Draw(screen)
 
 		return x, y, width, height
 	})
