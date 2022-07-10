@@ -44,7 +44,6 @@ func (c *Console) LoadScreen(name string) {
 	c.screenBox = *currentScreen.GetBox()
 
 	c.tBox.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		log.Println("width", width)
 		c.screenBox.Draw(screen)
 
 		return x, y, width, height

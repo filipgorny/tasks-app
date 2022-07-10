@@ -53,9 +53,9 @@ func (ts *TasksScreen) Build() {
 	ts.loadTasks()
 
 	tasksTable := tview.NewGrid()
-	tasksTable.SetColumns(0, 0, 0)
-	tasksTable.SetRows(1)
-	tasksTable.SetBorders(true)
+	tasksTable.SetColumns(3, 10, 0)
+	tasksTable.SetRows(0)
+	tasksTable.SetBorders(false)
 
 	doneCheck := ""
 
@@ -66,28 +66,40 @@ func (ts *TasksScreen) Build() {
 			SetTextColor(color).
 			SetText(text)
 	}
-	for index, task := range ts.tasks {
-		if task.Done {
-			doneCheck = "\u25c9"
-		} else {
-			doneCheck = "\u25ef"
-			taskColor = tcell.ColorOrange
+
+	lineY := 0
+
+	drawTasks := func() {
+		for _, task := range ts.tasks {
+			if task.Done {
+				doneCheck = "\u25c9"
+			} else {
+				doneCheck = "\u25ef"
+				taskColor = tcell.ColorOrange
+			}
+
+			label := task.Label
+
+			if len(task.Label) == 0 {
+				label = "<no label>"
+			}
+
+			tasksTable.AddItem(newPrimitive(taskColor, doneCheck), lineY, 0, 1, 1, 1, 1, false)
+			tasksTable.AddItem(newPrimitive(tcell.ColorOrange, task.Number), lineY, 1, 1, 1, 1, 1, false)
+			tasksTable.AddItem(newPrimitive(tcell.ColorWhite, label), lineY, 2, 1, 1, 1, 1, false)
+
+			lineY++
 		}
-
-		label := task.Label
-
-		if len(task.Label) == 0 {
-			label = "<no label>"
-		}
-
-		tasksTable.AddItem(newPrimitive(taskColor, doneCheck), index, 0, 1, 1, 1, 1, false)
-		tasksTable.AddItem(newPrimitive(tcell.ColorOrange, task.Number), index, 1, 1, 0, 10, 1, false)
-		tasksTable.AddItem(newPrimitive(tcell.ColorWhite, label), index, 2, 1, 0, 10, 10, false)
 	}
 
+	drawTasks()
+
 	ts.box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		screenWidth, screenHeight := screen.Size()
-		tasksTable.SetRect(2, 1, screenWidth-2, screenHeight)
+		screenWidth, _ := screen.Size()
+		tasksTable.SetRect(x+2, 2, screenWidth-2, height-2)
+		tasksTable.SetSize(len(ts.tasks), 3, 1, 0)
+		tasksTable.SetColumns(5, 15, 0)
+
 		tasksTable.Draw(screen)
 
 		return x, y, width, height
