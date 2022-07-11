@@ -8,6 +8,7 @@ import (
 
 type Screen interface {
 	GetBox() *tview.Box
+	GetDefaultFocus() tview.Primitive
 	Build()
 }
 

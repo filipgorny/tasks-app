@@ -26,8 +26,13 @@ func NewConsole() Console {
 	c.tApplication = tview.NewApplication()
 	c.currentScreen = nil
 
-	c.tBox = tview.NewBox()
+	c.tBox = tview.NewBox() /*
+		c.tBox.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+			cc.getCurrentScreen().GetBox().Draw(screen)
 
+			return x, y, width, height
+		})
+	*/
 	return c
 }
 
@@ -41,32 +46,38 @@ func (c *Console) LoadScreen(name string) {
 
 	currentScreen.Build()
 
-	c.screenBox = *currentScreen.GetBox()
-
 	c.tBox.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		c.screenBox.Draw(screen)
+		c.getCurrentScreen().GetBox().Draw(screen)
 
 		return x, y, width, height
 	})
 
 	if c.isRunning {
 		c.tApplication.Draw()
-		c.tApplication.SetFocus(currentScreen.GetBox())
+		c.tApplication.SetFocus(currentScreen.GetDefaultFocus())
 	}
 }
 
 func (c *Console) Run() {
 	log.Println("Running app")
 
-	err := c.tApplication.SetRoot(c.tBox, true).Run()
-	c.isRunning = true
-
 	currentScreen := c.getCurrentScreen()
 
 	if currentScreen != nil {
-		c.tApplication.SetFocus(currentScreen.GetBox())
+		c.tApplication.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			c.getCurrentScreen().GetBox().GetInputCapture()(event)
+			return event
+		})
 	}
 
+	err := c.tApplication.SetRoot(c.tBox, true).Run()
+
+	c.tApplication.SetFocus(currentScreen.GetDefaultFocus())
+
+	log.Println("screen", currentScreen)
+	c.isRunning = true
+
+	log.Println("after focus")
 	if err != nil {
 		log.Panicln("ERROR", err)
 	}
